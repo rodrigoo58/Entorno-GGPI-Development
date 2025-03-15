@@ -1,0 +1,28 @@
+let
+  Source = SharePoint.Files("https://tema365.sharepoint.com/sites/DataAplicacionesGGGPI", [ApiVersion = 15]),
+  #"Filtered rows" = Table.SelectRows(Source, each ([Folder Path] = "https://tema365.sharepoint.com/sites/DataAplicacionesGGGPI/Planilla Contanet/")),
+  #"Filtered hidden files" = Table.SelectRows(#"Filtered rows", each [Attributes]?[Hidden]? <> true),
+  #"Invoke custom function" = Table.AddColumn(#"Filtered hidden files", "Transform file", each #"Transform file"([Content])),
+  #"Removed other columns" = Table.SelectColumns(#"Invoke custom function", {"Name", "Transform file"}),
+  #"Expanded table column" = Table.ExpandTableColumn(#"Removed other columns", "Transform file", Table.ColumnNames(#"Transform file"(#"Sample file"))),
+  #"Changed column type" = Table.TransformColumnTypes(#"Expanded table column", {{"Código Trabajador", type text}, {"Documento Identidad", type text}, {"Nombre Trabajador", type text}, {"Fecha de Ingreso", type text}, {"Fecha de Cese", type text}, {"Area", type text}, {"Fecha de Nacimiento", type text}}),
+  #"Replaced value" = Table.ReplaceValue(#"Changed column type", ".xlsx", "", Replacer.ReplaceText, {"Name"}),
+  #"Duplicated column" = Table.DuplicateColumn(#"Replaced value", "Name", "Name - Copy"),
+  #"Extracted first characters" = Table.TransformColumns(#"Duplicated column", {{"Name - Copy", each Text.Start(_, 6), type text}}),
+  #"Duplicated column 1" = Table.DuplicateColumn(#"Extracted first characters", "Name - Copy", "Name - Copy - Copy"),
+  #"Duplicated column 2" = Table.DuplicateColumn(#"Duplicated column 1", "Name - Copy - Copy", "Name - Copy - Copy - Copy"),
+  #"Extracted first characters 1" = Table.TransformColumns(#"Duplicated column 2", {{"Name - Copy", each Text.Start(_, 2), type text}}),
+  #"Extracted text range" = Table.TransformColumns(#"Extracted first characters 1", {{"Name - Copy - Copy", each Text.Middle(_, 2, 2), type text}}),
+  #"Extracted last characters" = Table.TransformColumns(#"Extracted text range", {{"Name - Copy - Copy - Copy", each Text.End(_, 2), type text}}),
+  #"Added custom" = Table.AddColumn(#"Extracted last characters", "Fecha Archivo", each [#"Name - Copy - Copy - Copy"] & "/" & [#"Name - Copy - Copy"] & "/" & "20" & [#"Name - Copy"]),
+  #"Removed columns 1" = Table.RemoveColumns(#"Added custom", {"Name - Copy", "Name - Copy - Copy", "Name - Copy - Copy - Copy"}),
+  #"Changed column type 1" = Table.TransformColumnTypes(#"Removed columns 1", {{"Fecha Archivo", type text}}),
+  #"Duplicated column 3" = Table.DuplicateColumn(#"Changed column type 1", "Name", "Name - Copy"),
+  #"Extracted first characters 2" = Table.TransformColumns(#"Duplicated column 3", {{"Name - Copy", each Text.Start(_, 6), type text}}),
+  #"Duplicated column 4" = Table.DuplicateColumn(#"Extracted first characters 2", "Código Trabajador", "Código Trabajador - Copy"),
+  #"Extracted text range 1" = Table.TransformColumns(#"Duplicated column 4", {{"Código Trabajador - Copy", each Text.Middle(_, 1, 15), type text}}),
+  #"Added custom 1" = Table.AddColumn(#"Extracted text range 1", "Llave", each [#"Name - Copy"] & "-" & [#"Código Trabajador - Copy"]),
+  #"Removed columns 2" = Table.RemoveColumns(#"Added custom 1", {"Código Trabajador - Copy", "Name - Copy"}),
+  #"Changed column type 2" = Table.TransformColumnTypes(#"Removed columns 2", {{"Llave", type text}})
+in
+  #"Changed column type 2"
