@@ -1,0 +1,7 @@
+Propiedad DisplayMode
+El codigo al 17/03/2025 es:
+
+If(varProjectLookupID.'Project Progress Status' = 'PM Project Progress Status Choice'.Approval, DisplayMode.Disabled,DisplayMode.Edit)
+
+
+If(varProjectLookupID.'Project Progress Status' = 'PM Project Progress Status Choice'.Approval, DisplayMode.Disabled,DisplayMode.Edit)
